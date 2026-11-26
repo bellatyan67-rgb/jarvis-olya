@@ -1,0 +1,229 @@
+
+
+<!DOCTYPE html>
+
+<html lang="ru">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>ДЖАРВИС — ОЛЯ</title>
+
+<style>
+
+*{box-sizing:border-box}
+
+body{margin:0;min-height:100vh;background:radial-gradient(circle at center,#10213b,#050914 70%);color:#e8f7ff;font-family:Arial,sans-serif;text-align:center;padding:25px}
+
+h1{color:#54eaff;text-shadow:0 0 15px #00cfff;letter-spacing:3px}
+
+.sphere{width:180px;height:180px;border-radius:50%;margin:35px auto;background:radial-gradient(circle at 35% 30%,#b9ffff,#1599d8 35%,#071c45 70%);box-shadow:0 0 25px #00cfff,0 0 70px #007bff;animation:pulse 3s infinite}
+
+@keyframes pulse{50%{box-shadow:0 0 45px #00eaff,0 0 100px #007bff}}
+
+button{background:#092c48;color:#8df4ff;border:1px solid #16cfff;border-radius:12px;padding:12px 18px;margin:6px;cursor:pointer;font-size:15px}
+
+button:hover{background:#105071}
+
+input{width:min(90%,450px);padding:13px;border-radius:10px;border:1px solid #16cfff;background:#08182b;color:white;font-size:16px;margin:8px}
+
+#answer{max-width:650px;margin:20px auto;padding:18px;border:1px solid #176b91;border-radius:14px;background:#08182b;min-height:65px;line-height:1.5}
+
+.panel{max-width:650px;margin:22px auto;padding:15px;border:1px solid #164c70;border-radius:14px;background:#071426}
+
+li{padding:7px;text-align:left}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>ДЖАРВИС — ОЛЯ</h1>
+
+<p>Твой персональный помощник</p>
+
+<div class="sphere"></div>
+
+<button onclick="listen()">🎙 Говорить с Джарвисом</button>
+
+<div>
+
+<input id="command" placeholder="Напиши команду или вопрос">
+
+<button onclick="send()">Отправить</button>
+
+</div>
+
+<div id="answer">Я слушаю тебя, Оля. Чем могу помочь?</div>
+
+<div class="panel">
+
+<h3>📝 Мои заметки</h3>
+
+<input id="note" placeholder="Новая заметка">
+
+<button onclick="addNote()">Сохранить</button>
+
+<ul id="notes"></ul>
+
+</div>
+
+<div class="panel">
+
+<h3>✅ Мои задачи</h3>
+
+<input id="task" placeholder="Новая задача">
+
+<button onclick="addTask()">Добавить</button>
+
+<ul id="tasks"></ul>
+
+</div>
+
+<div class="panel">
+
+<h3>💰 Учёт расходов</h3>
+
+<input id="expense" type="number" placeholder="Сумма расхода">
+
+<button onclick="addExpense()">Записать расход</button>
+
+<p id="total">Всего расходов: 0</p>
+
+</div>
+
+<script>
+
+const $=id=>document.getElementById(id);
+
+let total=Number(localStorage.total||0);
+
+function say(text){
+
+ $("answer").textContent=text;
+
+ if("speechSynthesis" in window){
+
+  speechSynthesis.cancel();
+
+  speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+
+ }
+
+}
+
+function send(){
+
+ let q=$("command").value.trim().toLowerCase();
+
+ if(!q)return;
+
+ $("command").value="";
+
+ if(q.includes("привет"))say("Привет, Оля! Я готов тебе помогать.");
+
+ else if(q.includes("время"))say("Сейчас "+new Date().toLocaleTimeString("ru-RU"));
+
+ else if(q.includes("дата"))say("Сегодня "+new Date().toLocaleDateString("ru-RU"));
+
+ else if(q.includes("найди")||q.includes("поиск")){
+
+  let query=q.replace("найди","").replace("поиск","").trim();
+
+  say("Открываю поиск в интернете.");
+
+  window.open("https://www.google.com/search?q="+encodeURIComponent(query),"_blank");
+
+ }else if(q.includes("калькулятор"))say("Напиши пример в поиске, например 25 умножить на 4.");
+
+ else if(q.includes("как дела"))say("Прекрасно, Оля! Рада быть рядом.");
+
+ else say("Я пока умею отвечать на простые команды, открывать поиск и помогать с заметками и задачами.");
+
+}
+
+function listen(){
+
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+ if(!SpeechRecognition){say("Голосовой ввод не поддерживается этим браузером. Можешь написать команду.");return;}
+
+ const rec=new SpeechRecognition();
+
+ rec.lang="ru-RU";
+
+ rec.onresult=e=>{$("command").value=e.results[0][0].transcript;send();};
+
+ rec.onerror=()=>say("Не удалось распознать речь. Попробуй ещё раз.");
+
+ rec.start();
+
+}
+
+function addNote(){
+
+ let v=$("note").value.trim();if(!v)return;
+
+ let a=JSON.parse(localStorage.notes||"[]");a.push(v);
+
+ localStorage.notes=JSON.stringify(a);$("note").value="";showNotes();
+
+}
+
+function showNotes(){
+
+ $("notes").innerHTML="";
+
+ JSON.parse(localStorage.notes||"[]").forEach(v=>{
+
+  let li=document.createElement("li");li.textContent=v;$("notes").appendChild(li);
+
+ });
+
+}
+
+function addTask(){
+
+ let v=$("task").value.trim();if(!v)return;
+
+ let a=JSON.parse(localStorage.tasks||"[]");a.push(v);
+
+ localStorage.tasks=JSON.stringify(a);$("task").value="";showTasks();
+
+}
+
+function showTasks(){
+
+ $("tasks").innerHTML="";
+
+ JSON.parse(localStorage.tasks||"[]").forEach(v=>{
+
+  let li=document.createElement("li");li.textContent=v;$("tasks").appendChild(li);
+
+ });
+
+}
+
+function addExpense(){
+
+ let v=Number($("expense").value);if(!v||v<0)return;
+
+ total+=v;localStorage.total=total;$("expense").value="";showTotal();
+
+}
+
+function showTotal(){$("total").textContent="Всего расходов: "+total;}
+
+showNotes();showTasks();showTotal();
+
+$("command").addEventListener("keydown",e=>{if(e.key==="Enter")send();});
+
+</script>
+
+</body>
+
+</html>
